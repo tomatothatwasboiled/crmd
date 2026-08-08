@@ -17,7 +17,7 @@ import {
   updateIncidentChecklist
 } from './services/incidentService';
 import API from './services/api';
-import { processEmergencyWithPhi3 } from './services/triageService';
+import { processEmergencyWithAI } from './services/triageService';
 
 // Geocoding function
 async function geocodeLocation(locationName: string): Promise<{ lat: number; lng: number }> {
@@ -215,7 +215,7 @@ const IncidentDetail: React.FC<{
             <Bot className="w-8 h-8 text-indigo-400" />
             <div>
               <p className="text-xs text-slate-400">Autonomous Criticality Engine</p>
-              <p className="text-sm font-semibold text-slate-200">Phi-3 Mini Local Agent</p>
+              <p className="text-sm font-semibold text-slate-200">Groq Cloud Agent</p>
             </div>
           </div>
 
@@ -306,7 +306,7 @@ const IncidentDetail: React.FC<{
 // Agent Monitor Component
 const AgentMonitor: React.FC = () => {
   const agents = [
-    { name: 'Phi-3 Mini Triage Engine', status: 'Ollama Active Listening', load: '64%', desc: 'Parses incoming alerts locally and assesses threat levels via Ollama' },
+    { name: 'Groq Cloud Triage Engine', status: 'LPU Active Listening', load: '12%', desc: 'Parses incoming alerts instantly via Groq API' },
     { name: 'Dispatch Coordinator AI', status: 'Routing Ambulances & Fire Trucks', load: '78%', desc: 'Deploys appropriate units based on evaluated criticality' },
     { name: 'Geospatial Intelligence Agent', status: 'Fuzzy Location Resolution Active', load: '52%', desc: 'Resolves exact geographic coordinates even from misspelled input' },
   ];
@@ -365,7 +365,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
     try {
       const coords = await geocodeLocation(locationName);
       const userInputText = `${title}. ${description}`;
-      const aiAnalysis = await processEmergencyWithPhi3(userInputText);
+      const aiAnalysis = await processEmergencyWithAI(userInputText);
 
       const newIncidentData = {
         id: `INC-${Math.floor(100 + Math.random() * 900)}`,
@@ -430,7 +430,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">AI Decision Engine</p>
-            <h3 className="text-2xl font-bold mt-1 text-indigo-400">Phi-3 Local Triage</h3>
+            <h3 className="text-2xl font-bold mt-1 text-indigo-400">Groq AI Triage</h3>
           </div>
         </Link>
 
@@ -459,7 +459,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
           
           <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center gap-2">
             <Sparkles className="w-4 h-4 flex-shrink-0" />
-            <span>Phi-3 AI & SQL Persistence active.</span>
+            <span>Groq AI Triage active.</span>
           </div>
 
           <div>
@@ -504,7 +504,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Running Phi-3 Triage & Saving to SQL...
+                <Loader2 className="w-4 h-4 animate-spin" /> Running Groq AI Triage...
               </>
             ) : (
               <>

@@ -9,7 +9,7 @@ export interface AITriageResult {
   protocol: string;
 }
 
-export async function processEmergencyWithPhi3(userInput: string): Promise<AITriageResult> {
+export async function processEmergencyWithAI(userInput: string): Promise<AITriageResult> {
   const prompt = `
 You are the Autonomous Criticality Engine for CrisisMind AI, an agentic emergency response system.
 Analyze the following emergency report: "${userInput}"
@@ -30,30 +30,39 @@ You MUST respond with a valid JSON object ONLY, using this exact format with no 
 `;
 
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error("Missing VITE_GROQ_API_KEY environment variable.");
+    }
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        model: 'phi3',
-        prompt: prompt,
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'user', content: prompt }],
         stream: false,
-        format: 'json'
+        response_format: { type: 'json_object' }
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama server error: ${response.statusText}`);
+      throw new Error(`Groq server error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const cleanText = data.response.replace(/```json/g, '').replace(/```/g, '').trim();
+    const cleanText = data.choices[0].message.content.trim();
     return JSON.parse(cleanText);
   } catch (error) {
-    console.error('Phi-3 Triage Error:', error);
+    console.error('Groq Triage Error:', error);
     return {
-      title: userInput,
+      title: userInput.length > 50 ? userInput.substring(0, 50) + "..." : userInput,
       severity: 'High',
-      description: 'Processed via local fallback due to connection error with Phi-3 Mini.',
+      description: 'Processed via local fallback due to connection error with Groq API. Check your API Key.',
       unitsToDispatch: [
         { name: 'Emergency Response Unit 1', type: 'police' },
         { name: 'Emergency Ambulance Unit 1', type: 'ambulance' }
