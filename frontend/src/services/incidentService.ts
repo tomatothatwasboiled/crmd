@@ -187,3 +187,36 @@ export function exportIncidentsToExcel() {
   const writeFile = (XLSX as any).writeFile || XLSX.writeFile;
   writeFile(workbook, `CrisisMind_Incidents_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
+
+export function exportIncidentsToCSV() {
+  const incidents = getIncidents();
+  
+  const formattedData = incidents.map((inc) => ({
+    'ID': inc.id,
+    'Title': inc.title,
+    'Description': inc.description || '',
+    'Location': inc.location,
+    'Latitude': inc.lat,
+    'Longitude': inc.lng,
+    'AI Severity': inc.severity,
+    'Timestamp': inc.timestamp,
+    'Assigned Units': Array.isArray(inc.assignedUnits) ? inc.assignedUnits.join(', ') : '',
+    'Action Plan': inc.actionPlan,
+    'AI Confidence (%)': inc.agentConfidence,
+    'Status': inc.status,
+  }));
+
+  const utils = (XLSX as any).utils || XLSX;
+  const worksheet = utils.json_to_sheet(formattedData);
+  const csv = utils.sheet_to_csv(worksheet);
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `CrisisMind_Incidents_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { exportIncidentsToExcel } from '../services/incidentService';
+import { exportIncidentsToExcel, exportIncidentsToCSV } from '../services/incidentService';
 
 export function IncidentDashboardControls() {
   return (
@@ -10,6 +10,14 @@ export function IncidentDashboardControls() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Export to CSV Button */}
+        <button
+          onClick={exportIncidentsToCSV}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition shadow-sm"
+        >
+          <span>📄 Export CSV</span>
+        </button>
+
         {/* Export to Excel Button */}
         <button
           onClick={exportIncidentsToExcel}
