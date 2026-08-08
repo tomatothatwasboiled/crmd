@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import API from '../services/api';
-import { processEmergencyWithPhi3 } from '../services/triageService';
+import { processEmergencyWithAI } from '../services/triageService';
 
 export default function IncidentForm() {
   const [userInput, setUserInput] = useState('');
