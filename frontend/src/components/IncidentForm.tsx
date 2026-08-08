@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import API from '../services/api';
 import { processEmergencyWithAI } from '../services/triageService';
+
 export default function IncidentForm() {
   const [userInput, setUserInput] = useState('');
 
