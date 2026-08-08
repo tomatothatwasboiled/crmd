@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { 
   Activity, AlertTriangle, ShieldCheck, Truck, Navigation, 
-  Radio, Clock, MapPin, Bot, CheckCircle2, Cpu, ArrowLeft, PlusCircle, Loader2, Siren, LifeBuoy, Sparkles
+  Radio, Clock, MapPin, Bot, CheckCircle2, Cpu, ArrowLeft, PlusCircle, Loader2, Siren, LifeBuoy, Sparkles, Filter
 } from 'lucide-react';
 import { IncidentDashboardControls } from './components/IncidentDashboardControls';
 import { IncidentMap } from './components/IncidentMap';
@@ -536,6 +536,14 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
 export default function App() {
   const location = useLocation();
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [filterLocation, setFilterLocation] = useState<string>('All');
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+
+  const filteredIncidents = incidents.filter(inc => {
+    const matchLocation = filterLocation === 'All' || inc.location === filterLocation;
+    const matchCategory = filterCategory === 'All' || inc.severity === filterCategory;
+    return matchLocation && matchCategory;
+  });
 
   const loadIncidents = () => {
     setIncidents(getIncidents());
@@ -635,19 +643,57 @@ export default function App() {
         </div>
       </header>
 
+      {/* Global Filters Bar */}
+      <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center gap-4 flex-wrap">
+        <span className="text-sm font-medium text-slate-400 flex items-center gap-2">
+          <Filter className="w-4 h-4" /> Filters:
+        </span>
+        <select 
+          value={filterLocation}
+          onChange={(e) => setFilterLocation(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+        >
+          <option value="All">All Locations</option>
+          {Array.from(new Set(incidents.map(i => i.location).filter(Boolean))).map(loc => (
+            <option key={loc} value={loc}>{loc}</option>
+          ))}
+        </select>
+
+        <select 
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="bg-slate-800 border border-slate-700 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+        >
+          <option value="All">All Severities</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+
+        {(filterLocation !== 'All' || filterCategory !== 'All') && (
+          <button 
+            onClick={() => { setFilterLocation('All'); setFilterCategory('All'); }}
+            className="text-xs text-indigo-400 hover:text-indigo-300 ml-auto transition font-medium"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         <Routes>
           <Route 
             path="/" 
-            element={<HomeDashboard incidents={incidents} onAddIncident={handleAddIncident} />} 
+            element={<HomeDashboard incidents={filteredIncidents} onAddIncident={handleAddIncident} />} 
           />
           <Route 
             path="/feed" 
-            element={<IncidentFeed incidents={incidents} onComplete={handleCompleteIncident} />} 
+            element={<IncidentFeed incidents={filteredIncidents} onComplete={handleCompleteIncident} />} 
           />
           <Route 
             path="/feed/:id" 
-            element={<IncidentDetail incidents={incidents} onComplete={handleCompleteIncident} onUpdateChecklist={handleUpdateChecklist} />} 
+            element={<IncidentDetail incidents={filteredIncidents} onComplete={handleCompleteIncident} onUpdateChecklist={handleUpdateChecklist} />} 
           />
           <Route 
             path="/monitor" 
@@ -655,7 +701,7 @@ export default function App() {
           />
           <Route 
             path="/units" 
-            element={<DispatchedUnitsView incidents={incidents} />} 
+            element={<DispatchedUnitsView incidents={filteredIncidents} />} 
           />
           <Route 
             path="/sos" 

@@ -28,28 +28,70 @@ export function getIncidents(): Incident[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      const demoIncident: Incident = {
-        id: "INC-001",
-        title: "Commercial Fire at Tech Park",
-        description: "Large structural fire reported on the 4th floor.",
-        location: "CyberHub, Sector 29",
-        lat: 28.4682,
-        lng: 77.0655,
-        severity: "Critical",
-        timestamp: new Date().toISOString(),
-        assignedUnits: ["Fire Engine Alpha", "Ambulance Unit 2", "Police Response"],
-        actionPlan: "Deploy immediate fire suppression and secure perimeter. Treat casualties.",
-        agentConfidence: 98.2,
-        status: "Active",
-        checklist: [
-          { id: "c1", label: "Units Dispatched", completed: true },
-          { id: "c2", label: "On-site Contact Established", completed: false },
-          { id: "c3", label: "Escalation Evaluated", completed: false },
-          { id: "c4", label: "Area Secured", completed: false }
-        ]
-      };
-      saveIncidents([demoIncident]);
-      return [demoIncident];
+      const demoIncidents: Incident[] = [
+        {
+          id: "INC-001",
+          title: "Commercial Fire at Tech Park",
+          description: "Large structural fire reported on the 4th floor.",
+          location: "Downtown Commercial District",
+          lat: 28.4682,
+          lng: 77.0655,
+          severity: "Critical",
+          timestamp: new Date().toISOString(),
+          assignedUnits: ["Fire Engine Alpha", "Ambulance Unit 2", "Police Response"],
+          actionPlan: "Deploy immediate fire suppression and secure perimeter. Treat casualties.",
+          agentConfidence: 98.2,
+          status: "Active",
+          checklist: [
+            { id: "c1", label: "Units Dispatched", completed: true },
+            { id: "c2", label: "On-site Contact Established", completed: false },
+            { id: "c3", label: "Escalation Evaluated", completed: false },
+            { id: "c4", label: "Area Secured", completed: false }
+          ]
+        },
+        {
+          id: "INC-002",
+          title: "Multi-vehicle Collision",
+          description: "Accident involving 3 cars and a delivery truck on the highway.",
+          location: "Northside Suburbs",
+          lat: 28.5200,
+          lng: 77.1000,
+          severity: "High",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          assignedUnits: ["Highway Patrol", "Ambulance Unit 1"],
+          actionPlan: "Divert traffic, extract passengers, and clear debris.",
+          agentConfidence: 92.5,
+          status: "Active",
+          checklist: [
+            { id: "c1", label: "Units Dispatched", completed: true },
+            { id: "c2", label: "On-site Contact Established", completed: true },
+            { id: "c3", label: "Escalation Evaluated", completed: false },
+            { id: "c4", label: "Area Secured", completed: false }
+          ]
+        },
+        {
+          id: "INC-003",
+          title: "Chemical Spill Incident",
+          description: "Unidentified chemical leak in a manufacturing facility.",
+          location: "Industrial Park",
+          lat: 28.4000,
+          lng: 77.2500,
+          severity: "Medium",
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          assignedUnits: ["Hazmat Rescue Team", "Fire Engine Unit Bravo"],
+          actionPlan: "Evacuate building, identify chemical agent, contain spill.",
+          agentConfidence: 85.0,
+          status: "Active",
+          checklist: [
+            { id: "c1", label: "Units Dispatched", completed: true },
+            { id: "c2", label: "On-site Contact Established", completed: false },
+            { id: "c3", label: "Escalation Evaluated", completed: false },
+            { id: "c4", label: "Area Secured", completed: false }
+          ]
+        }
+      ];
+      saveIncidents(demoIncidents);
+      return demoIncidents;
     }
     const parsed = JSON.parse(data);
     return Array.isArray(parsed) ? parsed : [];
