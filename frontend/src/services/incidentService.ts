@@ -210,7 +210,7 @@ export function updateIncidentChecklist(incidentId: string, checklistId: string,
       return { 
         ...inc, 
         checklist: updatedChecklist,
-        status: allCompleted ? 'Resolved' : 'Active'
+        status: (allCompleted ? 'Resolved' : 'Active') as 'Resolved' | 'Active'
       };
     }
     return inc;
