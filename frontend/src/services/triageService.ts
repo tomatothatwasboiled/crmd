@@ -1,73 +1,57 @@
-export interface AITriageResult {
-  title: string;
-  severity: 'Low' | 'Medium' | 'High' | 'Critical';
-  description: string;
-  unitsToDispatch: {
-    name: string;
-    type: 'police' | 'ambulance' | 'fire' | 'hazmat';
-  }[];
-  protocol: string;
-}
+import React, { useState } from 'react';
+import API from '../services/api';
+import { processEmergencyWithAI } from '../services/triageService';
 
-export async function processEmergencyWithAI(userInput: string): Promise<AITriageResult> {
-  const prompt = `
-You are the Autonomous Criticality Engine for CrisisMind AI, an agentic emergency response system.
-Analyze the following emergency report: "${userInput}"
+export default function IncidentForm() {
+  const [userInput, setUserInput] = useState('');
 
-Determine the severity (Low, Medium, High, or Critical), write a short professional description, decide which emergency units to deploy (choose unit types strictly from: police, ambulance, fire, hazmat), and outline an emergency protocol.
-
-You MUST respond with a valid JSON object ONLY, using this exact format with no extra text or markdown formatting outside the JSON:
-{
-  "title": "Short title of the incident",
-  "severity": "High",
-  "description": "Professional summary of the situation",
-  "unitsToDispatch": [
-    { "name": "Fire Engine Unit Alpha", "type": "fire" },
-    { "name": "Emergency Ambulance Unit 1", "type": "ambulance" }
-  ],
-  "protocol": "Autonomous emergency protocol instructions"
-}
-`;
-
-  try {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (!apiKey) {
-      throw new Error("Missing VITE_GROQ_API_KEY environment variable.");
+    // Example coordinates (you can replace these with real map coordinates if you have them)
+    const latitude = 37.7749;
+    const longitude = -122.4194;
+
+    try {
+      // 1. Analyze input text using Groq AI
+      const aiAnalysis = await processEmergencyWithAI(userInput);
+
+      // 2. Format incident structure
+      const newIncident = {
+        id: `INC-${Math.floor(100 + Math.random() * 900)}`,
+        title: aiAnalysis.title,
+        severity: aiAnalysis.severity,
+        description: aiAnalysis.description,
+        protocol: aiAnalysis.protocol,
+        units: aiAnalysis.unitsToDispatch,
+        lat: latitude,
+        lng: longitude,
+        status: 'Active',
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      // 3. Save directly into your SQLite database via Express backend
+      const response = await API.saveIncidentToSQL(newIncident);
+      console.log('Saved to SQL database:', response);
+      
+      // Clear input after successful submit
+      setUserInput('');
+    } catch (error) {
+      console.error('Submission pipeline failed:', error);
     }
+  };
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{ role: 'user', content: prompt }],
-        stream: false,
-        response_format: { type: 'json_object' }
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Groq server error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const cleanText = data.choices[0].message.content.trim();
-    return JSON.parse(cleanText);
-  } catch (error) {
-    console.error('Groq Triage Error:', error);
-    return {
-      title: userInput.length > 50 ? userInput.substring(0, 50) + "..." : userInput,
-      severity: 'High',
-      description: 'Processed via local fallback due to connection error with Groq API. Check your API Key.',
-      unitsToDispatch: [
-        { name: 'Emergency Response Unit 1', type: 'police' },
-        { name: 'Emergency Ambulance Unit 1', type: 'ambulance' }
-      ],
-      protocol: 'Standard emergency deployment initiated.'
-    };
-  }
+  return (
+    <form onSubmit={handleFormSubmit} style={{ padding: '20px' }}>
+      <h2>Report Emergency</h2>
+      <input 
+        type="text" 
+        value={userInput} 
+        onChange={(e) => setUserInput(e.target.value)} 
+        placeholder="Describe the emergency..." 
+        style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+      />
+      <button type="submit" style={{ padding: '10px 20px' }}>Submit Report</button>
+    </form>
+  );
 }
