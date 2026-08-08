@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import API from '../services/api';
-import React, { useState } from 'react';
-import API from '../services/api';
 import { processEmergencyWithPhi3 } from '../services/triageService';
-
-export default function IncidentForm() {
 
 export default function IncidentForm() {
   const [userInput, setUserInput] = useState('');
@@ -17,13 +13,8 @@ export default function IncidentForm() {
     const longitude = -122.4194;
 
     try {
-<<<<<<< HEAD
-      // 1. Analyze input text using Groq AI
-      const aiAnalysis = await processEmergencyWithAI(userInput);
-=======
       // 1. Analyze input text using local Phi-3 Mini
       const aiAnalysis = await processEmergencyWithPhi3(userInput);
->>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
 
       // 2. Format incident structure
       const newIncident = {
