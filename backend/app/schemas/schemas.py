@@ -18,10 +18,16 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class ChecklistItem(BaseModel):
+    id: str
+    label: str
+    completed: bool
+
 class IncidentCreate(BaseModel):
     description: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    checklist: Optional[List[ChecklistItem]] = []
 
 class IncidentResponse(BaseModel):
     id: int
@@ -32,6 +38,7 @@ class IncidentResponse(BaseModel):
     verified: bool
     confidence_score: float
     assigned_resources: List[str]
+    checklist: List[ChecklistItem] = []
     created_at: datetime
     class Config:
         from_attributes = True

@@ -1,5 +1,11 @@
 import * as XLSX from 'xlsx';
 
+export interface ChecklistItem {
+  id: string;
+  label: string;
+  completed: boolean;
+}
+
 export interface Incident {
   id: string;
   title: string;
@@ -13,6 +19,7 @@ export interface Incident {
   actionPlan: string;
   agentConfidence: number;
   status: 'Active' | 'Resolved';
+  checklist: ChecklistItem[];
 }
 
 const STORAGE_KEY = 'crisismind_incidents';
@@ -21,7 +28,28 @@ export function getIncidents(): Incident[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) {
-      return [];
+      const demoIncident: Incident = {
+        id: "INC-001",
+        title: "Commercial Fire at Tech Park",
+        description: "Large structural fire reported on the 4th floor.",
+        location: "CyberHub, Sector 29",
+        lat: 28.4682,
+        lng: 77.0655,
+        severity: "Critical",
+        timestamp: new Date().toISOString(),
+        assignedUnits: ["Fire Engine Alpha", "Ambulance Unit 2", "Police Response"],
+        actionPlan: "Deploy immediate fire suppression and secure perimeter. Treat casualties.",
+        agentConfidence: 98.2,
+        status: "Active",
+        checklist: [
+          { id: "c1", label: "Units Dispatched", completed: true },
+          { id: "c2", label: "On-site Contact Established", completed: false },
+          { id: "c3", label: "Escalation Evaluated", completed: false },
+          { id: "c4", label: "Area Secured", completed: false }
+        ]
+      };
+      saveIncidents([demoIncident]);
+      return [demoIncident];
     }
     const parsed = JSON.parse(data);
     return Array.isArray(parsed) ? parsed : [];
@@ -41,7 +69,7 @@ export function saveIncidents(incidents: Incident[]): void {
   }
 }
 
-export function addIncident(newIncident: Omit<Incident, 'id' | 'timestamp' | 'status' | 'severity' | 'assignedUnits' | 'actionPlan' | 'agentConfidence'> & { severity?: Incident['severity']; assignedUnits?: string[]; actionPlan?: string; agentConfidence?: number }): Incident {
+export function addIncident(newIncident: Omit<Incident, 'id' | 'timestamp' | 'status' | 'severity' | 'assignedUnits' | 'actionPlan' | 'agentConfidence' | 'checklist'> & { severity?: Incident['severity']; assignedUnits?: string[]; actionPlan?: string; agentConfidence?: number; checklist?: ChecklistItem[] }): Incident {
   const incidents = getIncidents();
   
   const rawText = `${newIncident.title} ${newIncident.description || ''}`.toLowerCase();
@@ -93,6 +121,13 @@ export function addIncident(newIncident: Omit<Incident, 'id' | 'timestamp' | 'st
     actionPlan = 'Medical emergency dispatch (Fuzzy AI Match): Route closest ambulances via clear transit corridors, provide on-site trauma response, and manage traffic flow.';
   }
 
+  const defaultChecklist: ChecklistItem[] = [
+    { id: "c1", label: "Units Dispatched", completed: false },
+    { id: "c2", label: "On-site Contact Established", completed: false },
+    { id: "c3", label: "Escalation Evaluated", completed: false },
+    { id: "c4", label: "Area Secured", completed: false }
+  ];
+
   const created: Incident = {
     ...newIncident,
     lat: newIncident.lat || 28.6139,
@@ -100,7 +135,8 @@ export function addIncident(newIncident: Omit<Incident, 'id' | 'timestamp' | 'st
     severity,
     assignedUnits,
     actionPlan,
-    agentConfidence: Number((95.8 + Math.random() * 3.8).toFixed(1)), // High AI Confidence score
+    agentConfidence: Number((95.8 + Math.random() * 3.8).toFixed(1)),
+    checklist: newIncident.checklist || defaultChecklist,
     id: `INC-${String(incidents.length + 1).padStart(3, '0')}`,
     timestamp: new Date().toISOString(),
     status: 'Active'
@@ -116,6 +152,27 @@ export function completeIncident(id: string): void {
   const updated = incidents.map(inc => 
     inc.id === id ? { ...inc, status: 'Resolved' as const } : inc
   );
+  saveIncidents(updated);
+}
+
+export function updateIncidentChecklist(incidentId: string, checklistId: string, completed: boolean): void {
+  const incidents = getIncidents();
+  const updated = incidents.map(inc => {
+    if (inc.id === incidentId) {
+      const updatedChecklist = inc.checklist.map(item => 
+        item.id === checklistId ? { ...item, completed } : item
+      );
+      
+      const allCompleted = updatedChecklist.length > 0 && updatedChecklist.every(item => item.completed);
+      
+      return { 
+        ...inc, 
+        checklist: updatedChecklist,
+        status: allCompleted ? 'Resolved' : 'Active'
+      };
+    }
+    return inc;
+  });
   saveIncidents(updated);
 }
 

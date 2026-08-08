@@ -45,6 +45,14 @@ def process_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
     initial_state = {"raw_text": payload.description}
     output = crisis_ai_app.invoke(initial_state)
 
+    default_checklist = [
+        {"id": "c1", "label": "Units Dispatched", "completed": False},
+        {"id": "c2", "label": "On-site Contact Established", "completed": False},
+        {"id": "c3", "label": "Escalation Evaluated", "completed": False},
+        {"id": "c4", "label": "Area Secured", "completed": False}
+    ]
+    incident_checklist = [item.dict() for item in payload.checklist] if getattr(payload, "checklist", []) else default_checklist
+
     incident = Incident(
         description=payload.description,
         location=output['location'],
@@ -53,6 +61,7 @@ def process_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
         verified=output['verified'],
         confidence_score=output['confidence'],
         assigned_resources=output['resources'],
+        checklist=incident_checklist,
         latitude=payload.latitude or 12.9716,
         longitude=payload.longitude or 77.5946
     )
@@ -69,6 +78,24 @@ def process_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
 @app.get("/api/incidents", response_model=List[IncidentResponse])
 def get_incidents(db: Session = Depends(get_db)):
     return db.query(Incident).all()
+
+@app.put("/api/incidents/{incident_id}/checklist/{item_id}", response_model=IncidentResponse)
+def update_checklist_item(incident_id: int, item_id: str, completed: bool, db: Session = Depends(get_db)):
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    updated_checklist = []
+    for item in incident.checklist:
+        if item.get("id") == item_id:
+            updated_checklist.append({**item, "completed": completed})
+        else:
+            updated_checklist.append(item)
+    
+    incident.checklist = updated_checklist
+    db.commit()
+    db.refresh(incident)
+    return incident
 
 @app.get("/api/resources")
 def get_resources(db: Session = Depends(get_db)):

@@ -29,6 +29,7 @@ class Incident(Base):
     verified = Column(Boolean, default=False)
     confidence_score = Column(Float, default=0.0)
     assigned_resources = Column(JSON, default=[])
+    checklist = Column(JSON, default=[])
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Resource(Base):

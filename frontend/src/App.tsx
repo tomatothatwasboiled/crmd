@@ -13,7 +13,8 @@ import {
   getIncidents, 
   addIncident, 
   completeIncident,
-  clearAllIncidents 
+  clearAllIncidents,
+  updateIncidentChecklist
 } from './services/incidentService';
 import API from './services/api';
 import { processEmergencyWithPhi3 } from './services/triageService';
@@ -135,8 +136,9 @@ const IncidentFeed: React.FC<{
 // Incident Detail Component
 const IncidentDetail: React.FC<{ 
   incidents: Incident[]; 
-  onComplete: (id: string) => void; 
-}> = ({ incidents, onComplete }) => {
+  onComplete: (id: string) => void;
+  onUpdateChecklist: (incidentId: string, checklistId: string, completed: boolean) => void;
+}> = ({ incidents, onComplete, onUpdateChecklist }) => {
   const { id } = useParams<{ id: string }>();
   const incident = incidents.find((i) => i.id === id);
 
@@ -242,6 +244,54 @@ const IncidentDetail: React.FC<{
 
         <div className="space-y-2 pt-2">
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Action Checklist
+          </h3>
+          <div className="bg-slate-950 border border-slate-800 p-4 rounded-lg space-y-3 shadow-inner">
+            {incident.checklist && incident.checklist.length > 0 ? (
+              incident.checklist.map(item => (
+                <label key={item.id} className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input 
+                      type="checkbox" 
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-slate-700 bg-slate-900 checked:border-indigo-500 checked:bg-indigo-500 transition-all hover:border-indigo-400"
+                      checked={item.completed}
+                      onChange={(e) => onUpdateChecklist(incident.id, item.id, e.target.checked)}
+                    />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <span className={`text-sm select-none transition-colors ${item.completed ? 'text-slate-500 line-through' : 'text-slate-200 group-hover:text-indigo-300'}`}>
+                    {item.label}
+                  </span>
+                </label>
+              ))
+            ) : (
+              <p className="text-sm text-slate-500">No checklist items available.</p>
+            )}
+            {incident.checklist && incident.checklist.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-slate-800/60">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">Response Progress</span>
+                  <span className="text-xs font-semibold text-indigo-400">
+                    {Math.round((incident.checklist.filter(i => i.completed).length / incident.checklist.length) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-900 rounded-full h-1.5">
+                  <div 
+                    className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" 
+                    style={{ width: `${(incident.checklist.filter(i => i.completed).length / incident.checklist.length) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-2">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
             <LifeBuoy className="w-4 h-4 text-amber-400" /> Autonomous Emergency Protocol
           </h3>
           <p className="text-sm text-amber-200/90 bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg leading-relaxed font-mono">
@@ -332,7 +382,11 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ incidents, onAddIncident 
         actionPlan: aiAnalysis.protocol
       };
 
-      await API.saveIncidentToSQL(newIncidentData);
+      try {
+        await API.saveIncidentToSQL(newIncidentData);
+      } catch (sqlError) {
+        console.warn('Backend SQL save failed, falling back to local storage only:', sqlError);
+      }
       onAddIncident(newIncidentData);
 
       setTitle('');
@@ -506,6 +560,11 @@ export default function App() {
     loadIncidents();
   };
 
+  const handleUpdateChecklist = (incidentId: string, checklistId: string, completed: boolean) => {
+    updateIncidentChecklist(incidentId, checklistId, completed);
+    loadIncidents();
+  };
+
   const handleResetData = () => {
     clearAllIncidents();
     setIncidents([]);
@@ -588,7 +647,7 @@ export default function App() {
           />
           <Route 
             path="/feed/:id" 
-            element={<IncidentDetail incidents={incidents} onComplete={handleCompleteIncident} />} 
+            element={<IncidentDetail incidents={incidents} onComplete={handleCompleteIncident} onUpdateChecklist={handleUpdateChecklist} />} 
           />
           <Route 
             path="/monitor" 
