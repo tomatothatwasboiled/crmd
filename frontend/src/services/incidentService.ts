@@ -129,7 +129,13 @@ export function addIncident(newIncident: Omit<Incident, 'id' | 'timestamp' | 'st
 export function completeIncident(id: string): void {
   const incidents = getIncidents();
   const updated = incidents.map(inc => 
-    inc.id === id ? { ...inc, status: 'Resolved' as const } : inc
+    inc.id === id 
+      ? { 
+          ...inc, 
+          status: 'Resolved' as const,
+          checklist: inc.checklist ? inc.checklist.map(item => ({ ...item, completed: true })) : []
+        } 
+      : inc
   );
   saveIncidents(updated);
 }
