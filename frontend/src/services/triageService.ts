@@ -43,7 +43,7 @@ You MUST respond with a valid JSON object ONLY, using this exact format with no 
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: prompt }],
         stream: false,
         response_format: { type: 'json_object' }
