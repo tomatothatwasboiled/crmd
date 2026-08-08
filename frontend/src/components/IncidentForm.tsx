@@ -14,7 +14,7 @@ export default function IncidentForm() {
 
     try {
       // 1. Analyze input text using local Phi-3 Mini
-      const aiAnalysis = await processEmergencyWithPhi3(userInput);
+      const aiAnalysis = await processEmergencyWithAI(userInput);
 
       // 2. Format incident structure
       const newIncident = {
