@@ -13,7 +13,7 @@ export default function IncidentForm() {
     const longitude = -122.4194;
 
     try {
-      // 1. Analyze input text using local Phi-3 Mini
+      // 1. Analyze input text using Groq AI
       const aiAnalysis = await processEmergencyWithAI(userInput);
 
       // 2. Format incident structure
