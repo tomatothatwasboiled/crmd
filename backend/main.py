@@ -4,11 +4,19 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database.session import engine, Base, get_db
+<<<<<<< HEAD
 from app.models.models import User, UserRole, Incident, Resource, AgentLog
+=======
+from app.models.models import User, Incident, Resource, AgentLog
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
 from app.schemas.schemas import UserCreate, UserResponse, Token, IncidentCreate, IncidentResponse, DecisionOutput
 from app.auth.security import hash_password, verify_password, create_access_token, get_current_user
 from app.graph.disaster_graph import crisis_ai_app
 from app.routing.optimizer import find_nearest_resource
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CrisisMind AI Engine", version="1.0.0")
@@ -40,7 +48,11 @@ def login(user_in: UserCreate, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 @app.post("/api/incidents", response_model=IncidentResponse)
+<<<<<<< HEAD
 def process_incident(payload: IncidentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+=======
+def process_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
     initial_state = {"raw_text": payload.description}
     output = crisis_ai_app.invoke(initial_state)
 
@@ -53,7 +65,10 @@ def process_incident(payload: IncidentCreate, db: Session = Depends(get_db), cur
     incident_checklist = [item.dict() for item in payload.checklist] if getattr(payload, "checklist", []) else default_checklist
 
     incident = Incident(
+<<<<<<< HEAD
         user_id=current_user.id,  # Links the request to the user who raised it
+=======
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
         description=payload.description,
         location=output['location'],
         disaster_type=output['disaster_type'],
@@ -76,6 +91,7 @@ def process_incident(payload: IncidentCreate, db: Session = Depends(get_db), cur
     return incident
 
 @app.get("/api/incidents", response_model=List[IncidentResponse])
+<<<<<<< HEAD
 def get_incidents(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Admins see everything, regular users see only their own requests
     if current_user.role == UserRole.ADMIN:
@@ -91,6 +107,16 @@ def update_checklist_item(incident_id: int, item_id: str, completed: bool, db: S
     incident = query.first()
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found or unauthorized")
+=======
+def get_incidents(db: Session = Depends(get_db)):
+    return db.query(Incident).all()
+
+@app.put("/api/incidents/{incident_id}/checklist/{item_id}", response_model=IncidentResponse)
+def update_checklist_item(incident_id: int, item_id: str, completed: bool, db: Session = Depends(get_db)):
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
     
     updated_checklist = []
     for item in incident.checklist:
@@ -109,6 +135,7 @@ def get_resources(db: Session = Depends(get_db)):
     return db.query(Resource).all()
 
 @app.post("/api/optimize")
+<<<<<<< HEAD
 def optimize_route(incident_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     query = db.query(Incident).filter(Incident.id == incident_id)
     if current_user.role != UserRole.ADMIN:
@@ -117,6 +144,12 @@ def optimize_route(incident_id: int, db: Session = Depends(get_db), current_user
     inc = query.first()
     if not inc:
         raise HTTPException(status_code=404, detail="Incident missing or unauthorized")
+=======
+def optimize_route(incident_id: int, db: Session = Depends(get_db)):
+    inc = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident missing")
+>>>>>>> 6ad190cf1a225eb28e0e0c2cf69a08c11f579c53
 
     resources = db.query(Resource).filter(Resource.status == "AVAILABLE").all()
     res_dicts = [{"name": r.name, "resource_type": r.resource_type, "latitude": r.latitude, "longitude": r.longitude} for r in resources]
